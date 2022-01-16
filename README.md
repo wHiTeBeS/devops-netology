@@ -64,10 +64,8 @@ touch F{1..100000}
 [[ ]] это составная команда  
 -d возвращает истину если существует файл или дирректория
 [[ -d /tmp ]] вернет истину т.к. дирректория /tmp существует
-vagrant@vagrant:~$ [[ -d /tmp ]]  
-vagrant@vagrant:~$ echo $?  
-0   
-vagrant@vagrant:~$  
+[[ -d /tmp ]]  
+echo $?  
 0 - успешное выполнение команды  
 
 12. Основываясь на знаниях о просмотре текущих (например, PATH) и установке новых переменных; командах, которые мы рассматривали, добейтесь в выводе type -a bash в виртуальной машине наличия первым пунктом в списке:
@@ -77,17 +75,17 @@ bash is /usr/local/bin/bash
 bash is /bin/bash
 (прочие строки могут отличаться содержимым и порядком) В качестве ответа приведите команды, которые позволили вам добиться указанного вывода или соответствующие скриншоты.
 
-vagrant@vagrant:~$ mkdir /tmp/new_path_directory/  
-vagrant@vagrant:~$ cp /bin/bash /tmp/new_path_directory  
-vagrant@vagrant:~$ PATH=/tmp/new_path_directory/:$PATH  
-vagrant@vagrant:~$ type -a bash  
-bash is /tmp/new_path_directory/bash  
-bash is /usr/bin/bash  
-bash is /bin/bash  
+mkdir /tmp/new_path_directory/  
+cp /bin/bash /tmp/new_path_directory  
+PATH=/tmp/new_path_directory/:$PATH  
+type -a bash  
+    bash is /tmp/new_path_directory/bash  
+    bash is /usr/bin/bash  
+    bash is /bin/bash  
 
 13. Чем отличается планирование команд с помощью batch и at?
 at      запускает команды в указанное время
 batch   запускает команды при оределннном уровне загрузки системы (1,5 или определенном при запуске atd)  
 14. Завершите работу виртуальной машины чтобы не расходовать ресурсы компьютера и/или батарею ноутбука.  
-vagrant@vagrant:~$ exit  
+exit  
 vagrant suspend
