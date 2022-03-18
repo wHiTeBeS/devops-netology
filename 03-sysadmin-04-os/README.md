@@ -101,38 +101,183 @@ node_disk_written_bytes_total
     ```bash
     config.vm.network "forwarded_port", guest: 19999, host: 19999
     ```
-
     После успешной перезагрузки в браузере *на своем ПК* (не в виртуальной машине) вы должны суметь зайти на `localhost:19999`. Ознакомьтесь с метриками, которые по умолчанию собираются Netdata и с комментариями, которые даны к этим метрикам.
-
-5. Можно ли по выводу `dmesg` понять, осознает ли ОС, что загружена не на настоящем оборудовании, а на системе виртуализации?
-6. Как настроен sysctl `fs.nr_open` на системе по-умолчанию? Узнайте, что означает этот параметр. Какой другой существующий лимит не позволит достичь такого числа (`ulimit --help`)?
-7. Запустите любой долгоживущий процесс (не `ls`, который отработает мгновенно, а, например, `sleep 1h`) в отдельном неймспейсе процессов; покажите, что ваш процесс работает под PID 1 через `nsenter`. Для простоты работайте в данном задании под root (`sudo -i`). Под обычным пользователем требуются дополнительные опции (`--map-root-user`) и т.д.
-8. Найдите информацию о том, что такое `:(){ :|:& };:`. Запустите эту команду в своей виртуальной машине Vagrant с Ubuntu 20.04 (**это важно, поведение в других ОС не проверялось**). Некоторое время все будет "плохо", после чего (минуты) – ОС должна стабилизироваться. Вызов `dmesg` расскажет, какой механизм помог автоматической стабилизации. Как настроен этот механизм по-умолчанию, и как изменить число процессов, которое можно создать в сессии?
-
+![img.png](img.png)
  
- ---
+5. Можно ли по выводу `dmesg` понять, осознает ли ОС, что загружена не на настоящем оборудовании, а на системе виртуализации?
+Да
+```bash
+vagrant@vagrant:~$ dmesg | grep virt*
+[    0.009723] CPU MTRRs all blank - virtualized system.
+[    0.077973] Booting paravirtualized kernel on KVM
+[   13.673610] systemd[1]: Detected virtualization oracle.
+```
 
-## Как сдавать задания
+7. Как настроен sysctl `fs.nr_open` на системе по-умолчанию? Узнайте, что означает этот параметр. Какой другой существующий лимит не позволит достичь такого числа (`ulimit --help`)?
 
-Обязательными к выполнению являются задачи без указания звездочки. Их выполнение необходимо для получения зачета и диплома о профессиональной переподготовке.
+`fs.nr_open`  это лимит на количество открытых файловых дескрипторов
 
-Задачи со звездочкой (*) являются дополнительными задачами и/или задачами повышенной сложности. Они не являются обязательными к выполнению, но помогут вам глубже понять тему.
+Описание [здесь](https://ru.stackoverflow.com/questions/475417/%D0%9B%D0%B8%D0%BC%D0%B8%D1%82-%D0%BD%D0%B0-%D0%BA%D0%BE%D0%BB%D0%B8%D1%87%D0%B5%D1%81%D1%82%D0%B2%D0%BE-%D0%BE%D1%82%D0%BA%D1%80%D1%8B%D1%82%D1%8B%D1%85-%D0%B4%D0%B5%D1%81%D0%BA%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D1%80%D0%BE%D0%B2)
+```bash
+* Начать стоит с проверки c и ulimit -aH в shell'е перед запуском вашего демона.  
+Это быстро покажет текущие "мягкие" и (второй вызов) "жесткие" ограничения. При помощи ulimit  
+можно открутить мягкие ограничения до пределов жестких. Следует понимать, что ulimit меняет только  
+текущие лимиты, для шелла и всех программ, запущенных в этом шелле, поэтому после завершения сессии  
+или даже в другом окне терминала значения останутся прежними.  
 
-Домашнее задание выполните в файле readme.md в github репозитории. В личном кабинете отправьте на проверку ссылку на .md-файл в вашем репозитории.
+* Следующее место задания ограничений, на этот раз постоянных — это /etc/security/limits.conf  
+и каталог /etc/security/limits.d/, ограничение называется nofile. Редактировать (а, иногда, и смотреть)  
+эти файлы может только суперпользователь ("root"). Там задаются ограничения на отдельных пользователей  
+или группы, применяемые на всю сессию данного пользователя, или всех пользователей определенной группы.  
 
-Также вы можете выполнить задание в [Google Docs](https://docs.google.com/document/u/0/?tgif=d) и отправить в личном кабинете на проверку ссылку на ваш документ.
-Название файла Google Docs должно содержать номер лекции и фамилию студента. Пример названия: "1.1. Введение в DevOps — Сусанна Алиева".
+* И наконец, есть "системное ограничение", задаваемое через sysctl - это fs.nr_open:  
 
-Если необходимо прикрепить дополнительные ссылки, просто добавьте их в свой Google Docs.
+```
 
-Перед тем как выслать ссылку, убедитесь, что ее содержимое не является приватным (открыто на комментирование всем, у кого есть ссылка), иначе преподаватель не сможет проверить работу. Чтобы это проверить, откройте ссылку в браузере в режиме инкогнито.
+```bash
+vagrant@vagrant:~$ ulimit -a
+core file size          (blocks, -c) 0
+data seg size           (kbytes, -d) unlimited
+scheduling priority             (-e) 0
+file size               (blocks, -f) unlimited
+pending signals                 (-i) 3691
+max locked memory       (kbytes, -l) 65536
+max memory size         (kbytes, -m) unlimited
+open files                      (-n) 1024
+pipe size            (512 bytes, -p) 8
+POSIX message queues     (bytes, -q) 819200
+real-time priority              (-r) 0
+stack size              (kbytes, -s) 8192
+cpu time               (seconds, -t) unlimited
+max user processes              (-u) 3691
+virtual memory          (kbytes, -v) unlimited
+file locks                      (-x) unlimited
+vagrant@vagrant:~$ ulimit -aH
+core file size          (blocks, -c) unlimited
+data seg size           (kbytes, -d) unlimited
+scheduling priority             (-e) 0
+file size               (blocks, -f) unlimited
+pending signals                 (-i) 3691
+max locked memory       (kbytes, -l) 65536
+max memory size         (kbytes, -m) unlimited
+open files                      (-n) 1048576
+pipe size            (512 bytes, -p) 8
+POSIX message queues     (bytes, -q) 819200
+real-time priority              (-r) 0
+stack size              (kbytes, -s) unlimited
+cpu time               (seconds, -t) unlimited
+max user processes              (-u) 3691
+virtual memory          (kbytes, -v) unlimited
+file locks                      (-x) unlimited
+vagrant@vagrant:~$ /sbin/sysctl -n fs.nr_open
+1048576
+```
 
-[Как предоставить доступ к файлам и папкам на Google Диске](https://support.google.com/docs/answer/2494822?hl=ru&co=GENIE.Platform%3DDesktop)
+9. Запустите любой долгоживущий процесс (не `ls`, который отработает мгновенно, а, например, `sleep 1h`) в отдельном неймспейсе процессов; покажите, что ваш процесс работает под PID 1 через `nsenter`. Для простоты работайте в данном задании под root (`sudo -i`). Под обычным пользователем требуются дополнительные опции (`--map-root-user`) и т.д.
+```bash
+vagrant@vagrant:~$ sudo -i
+root@vagrant:~# unshare -f --pid --mount-proc  sleep 1h
+^Z
+[1]+  Stopped                 unshare -f --pid --mount-proc sleep 1h
+root@vagrant:~# ps aux | grep sleep
+root        1415  0.0  0.0   5480   520 pts/0    T    21:22   0:00 unshare -f --pid --mount-proc sleep 1h
+root        1416  0.0  0.0   5476   524 pts/0    S    21:22   0:00 sleep 1h
+root        1419  0.0  0.0   6432   736 pts/0    R+   21:23   0:00 grep --color=auto sleep
+root@vagrant:~# nsenter -t 1416 -p -m
+root@vagrant:/# ps
+    PID TTY          TIME CMD
+      1 pts/0    00:00:00 sleep
+      2 pts/0    00:00:00 bash
+     13 pts/0    00:00:00 ps 
+``` 
 
-[Как запустить chrome в режиме инкогнито ](https://support.google.com/chrome/answer/95464?co=GENIE.Platform%3DDesktop&hl=ru)
+11. Найдите информацию о том, что такое `:(){ :|:& };:`. Запустите эту команду в своей виртуальной машине Vagrant с Ubuntu 20.04 (**это важно, поведение в других ОС не проверялось**). Некоторое время все будет "плохо", после чего (минуты) – ОС должна стабилизироваться. Вызов `dmesg` расскажет, какой механизм помог автоматической стабилизации. Как настроен этот механизм по-умолчанию, и как изменить число процессов, которое можно создать в сессии?
 
-[Как запустить  Safari в режиме инкогнито ](https://support.apple.com/ru-ru/guide/safari/ibrw1069/mac)
+Это форк бомба. Она оперирует определением функции с именем ‘:‘, которая вызывает сама себя дважды: один раз на переднем плане и один раз в фоне. Она продолжает своё выполнение снова и снова, пока система не зависнет
+```bash
+vagrant@vagrant:~$ dmesg | grep fork
+[ 1157.964136] cgroup: fork rejected by pids controller in /user.slice/user-1000.slice/session-3.scope
+```
+Cработал механизм сgroups - это способ ограничить ресурсы внутри конкретной cgroup(контрольной группы процессов).
+Параметры по умолчанию можно посмотреть командой ulimit -a:
+```bash
+vagrant@vagrant:~$ ulimit -a
+core file size          (blocks, -c) 0
+data seg size           (kbytes, -d) unlimited
+scheduling priority             (-e) 0
+file size               (blocks, -f) unlimited
+pending signals                 (-i) 3691
+max locked memory       (kbytes, -l) 65536
+max memory size         (kbytes, -m) unlimited
+open files                      (-n) 1024
+pipe size            (512 bytes, -p) 8
+POSIX message queues     (bytes, -q) 819200
+real-time priority              (-r) 0
+stack size              (kbytes, -s) 8192
+cpu time               (seconds, -t) unlimited
+max user processes              (-u) 3691
+virtual memory          (kbytes, -v) unlimited
+file locks                      (-x) unlimited
+```
 
-Любые вопросы по решению задач задавайте в чате Slack.
+Назначить новые параметры можно в `/etc/security/limits.conf`
 
----
+```bash
+vagrant@vagrant:~$ cat /etc/security/limits.conf
+# /etc/security/limits.conf
+#
+#Each line describes a limit for a user in the form:
+#
+#<domain>        <type>  <item>  <value>
+#
+#Where:
+#<domain> can be:
+#        - a user name
+#        - a group name, with @group syntax
+#        - the wildcard *, for default entry
+#        - the wildcard %, can be also used with %group syntax,
+#                 for maxlogin limit
+#        - NOTE: group and wildcard limits are not applied to root.
+#          To apply a limit to the root user, <domain> must be
+#          the literal username root.
+#
+#<type> can have the two values:
+#        - "soft" for enforcing the soft limits
+#        - "hard" for enforcing hard limits
+#
+#<item> can be one of the following:
+#        - core - limits the core file size (KB)
+#        - data - max data size (KB)
+#        - fsize - maximum filesize (KB)
+#        - memlock - max locked-in-memory address space (KB)
+#        - nofile - max number of open file descriptors
+#        - rss - max resident set size (KB)
+#        - stack - max stack size (KB)
+#        - cpu - max CPU time (MIN)
+#        - nproc - max number of processes
+#        - as - address space limit (KB)
+#        - maxlogins - max number of logins for this user
+#        - maxsyslogins - max number of logins on the system
+#        - priority - the priority to run user process with
+#        - locks - max number of file locks the user can hold
+#        - sigpending - max number of pending signals
+#        - msgqueue - max memory used by POSIX message queues (bytes)
+#        - nice - max nice priority allowed to raise to values: [-20, 19]
+#        - rtprio - max realtime priority
+#        - chroot - change root to directory (Debian-specific)
+#
+#<domain>      <type>  <item>         <value>
+#
+
+#*               soft    core            0
+#root            hard    core            100000
+#*               hard    rss             10000
+#@student        hard    nproc           20
+#@faculty        soft    nproc           20
+#@faculty        hard    nproc           50
+#ftp             hard    nproc           0
+#ftp             -       chroot          /ftp
+#@student        -       maxlogins       4
+
+# End of file
+```
