@@ -167,7 +167,8 @@ Keys:  Help   Display mode   Restart statistics   Order of fields   quit
 20. (waiting for reply)21. AS15169  8.8.8.8   0.0%     5   24.4  24.3  24.1  24.6   0.2
 ```
 Самая большая задержка здесь
-`8. AS15169  142.251.238.68                   0.0%    48   23.9  29.1  23.8 103.2  13.2`
+`8. AS15169  142.251.238.68                   0.0%    48   23.9  29.1  23.8 103.2  13.2`  
+
 7. Какие DNS сервера отвечают за доменное имя dns.google? Какие A записи? воспользуйтесь утилитой `dig`
 ```bash
 vagrant@vagrant:~$ dig dns.google
